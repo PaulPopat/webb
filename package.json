@@ -1,0 +1,34 @@
+{
+  "name": "webb",
+  "version": "1.0.0",
+  "description": "A web component based JavaScript first framework using templating",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "jest",
+    "compile": "tsc",
+    "prepublish": "npm run test && npm run compile"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PaulPopat/webb.git"
+  },
+  "keywords": [
+    "web-components"
+  ],
+  "author": "paulpopat",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PaulPopat/webb/issues"
+  },
+  "homepage": "https://github.com/PaulPopat/webb#readme",
+  "devDependencies": {
+    "@types/jest": "^27.4.1",
+    "jest": "^27.5.1",
+    "ts-jest": "^27.1.3",
+    "typescript": "^4.6.2"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node"
+  }
+}

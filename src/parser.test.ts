@@ -8,6 +8,12 @@ it.each([
     },
   ],
   [
+    "<template>Hello\nWorld</template>",
+    {
+      template: ["Hello World"],
+    },
+  ],
+  [
     '<template>Hello</template><script on="props"><testdata/></script>',
     {
       template: ["Hello"],

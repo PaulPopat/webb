@@ -20,6 +20,7 @@ import {
   EventTrigger,
   GlobalEvent,
 } from "./types";
+import Object from "./utils/object";
 
 const options: X2jOptions = {
   ignoreAttributes: false,
@@ -110,7 +111,7 @@ const IsProps = IsObject({
 
 type Template = IsType<typeof IsTemplate>;
 
-export type XmlElement =
+type XmlElement =
   | {
       tag: string;
       attributes: Record<string, string | boolean>;
@@ -118,10 +119,10 @@ export type XmlElement =
     }
   | string;
 
-function GetTag(ele: Xml[number]) {
-  return Object.keys(ele)
+function GetTag(ele: Xml[number]): string {
+  return Object.Keys(ele)
     .geninq()
-    .single((k) => k !== ":@");
+    .single((k: string) => k !== ":@");
 }
 
 function TransformXml(xml: Xml): XmlElement[] {
@@ -129,7 +130,7 @@ function TransformXml(xml: Xml): XmlElement[] {
     .geninq()
     .select((o) =>
       IsText(o)
-        ? o["@_text"]
+        ? o["@_text"].replace(/\s+/gm, " ")
         : {
             tag: GetTag(o),
             attributes: WithAttributes(o) ? o[":@"]["@_attr"] : {},
@@ -141,8 +142,11 @@ function TransformXml(xml: Xml): XmlElement[] {
 
 function GetHandlers(xml: Xml) {
   const scripts = xml.geninq().where((i) => GetTag(i) === "script");
-  const element_events = {} as Record<string, Record<EventTrigger, string>>;
-  const global_events = {} as Record<GlobalEvent, string>;
+  const element_events = {} as Record<
+    string,
+    Partial<Record<EventTrigger, string>>
+  >;
+  const global_events = {} as Partial<Record<GlobalEvent, string>>;
   for (const script of scripts) {
     Assert(IsScript, script, "Invalid script. See documentation.");
     const attr = script[":@"]["@_attr"];
@@ -160,9 +164,9 @@ function GetHandlers(xml: Xml) {
     element_events?: typeof element_events;
     global_events?: typeof global_events;
   };
-  if (Object.keys(element_events).length)
+  if (Object.Keys(element_events).length)
     result.element_events = element_events;
-  if (Object.keys(global_events).length) result.global_events = global_events;
+  if (Object.Keys(global_events).length) result.global_events = global_events;
 
   return result;
 }
@@ -217,3 +221,5 @@ export function ParseTemplate(xml: string) {
     ...GetProps(result),
   };
 }
+
+export type ParsedTemplate = ReturnType<typeof ParseTemplate>;

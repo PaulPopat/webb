@@ -4,50 +4,78 @@ it.each([
   [
     "<template>Hello</template>",
     {
-      template: [{ "@_text": "Hello" }],
-      element_events: {},
-      global_events: {},
+      template: ["Hello"],
     },
   ],
   [
     '<template>Hello</template><script on="props"><testdata/></script>',
     {
-      template: [{ "@_text": "Hello" }],
+      template: ["Hello"],
       global_events: { props: "<testdata/>" },
-      element_events: {},
     },
   ],
   [
     '<template>Hello</template><script trigger="click" selector="test"><testdata/></script>',
     {
-      template: [{ "@_text": "Hello" }],
-      global_events: {},
+      template: ["Hello"],
       element_events: { test: { click: "<testdata/>" } },
     },
   ],
   [
     "<template>Hello</template><style><testdata/></style>",
     {
-      template: [{ "@_text": "Hello" }],
-      global_events: {},
-      element_events: {},
+      template: ["Hello"],
       styles: "<testdata/>",
     },
   ],
   [
-    "<template><div>This<b>is</b>a test</template>",
+    "<template><div>This<b>is</b>a test</div></template>",
     {
       template: [
         {
-          div: [
-            { "@_text": "This" },
-            { b: [{ "@_text": "is" }] },
-            { "@_text": "a test" },
+          tag: "div",
+          attributes: {},
+          children: [
+            "This",
+            {
+              tag: "b",
+              attributes: {},
+              children: ["is"],
+            },
+            "a test",
           ],
         },
       ],
-      global_events: {},
-      element_events: {},
+    },
+  ],
+  [
+    '<template><div class="test">This is a test</div></template>',
+    {
+      template: [
+        {
+          tag: "div",
+          attributes: { class: "test" },
+          children: ["This is a test"],
+        },
+      ],
+    },
+  ],
+  [
+    '<props><prop name="test" /></props><template>This is a test</template>',
+    {
+      props: {
+        test: "DoNotCare"
+      },
+      template: ["This is a test"],
+    },
+  ],
+  [
+    '<props><prop name="test" complex validation="IsString" /></props><template>This is a test</template>',
+    {
+      props: {
+        test: "IsString"
+      },
+      template: ["This is a test"],
     },
   ],
 ])("renders %s correctly", (xml, expected) => {
@@ -75,6 +103,10 @@ it.each([
   [
     '<template>Hello</template><style test="wrong">test</style>',
     new Error("Invalid styles. See documentation."),
+  ],
+  [
+    '<props><prop name="hello">Invalid Children</prop></props><template>Hello</template>',
+    new Error("Props are invalid"),
   ],
 ])("fails on %s", (xml, error) => {
   expect(() => ParseTemplate(xml)).toThrowError(error);

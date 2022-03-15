@@ -1,1 +1,8 @@
-import { XMLParser } from "fast-xml-parser";
+import { CompileApp } from "./compiler";
+
+(async () => {
+  await CompileApp();
+})().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

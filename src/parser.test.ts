@@ -70,7 +70,7 @@ it.each([
     '<props><prop name="test" /></props><template>This is a test</template>',
     {
       props: {
-        test: "DoNotCare"
+        test: "DoNotCare",
       },
       template: ["This is a test"],
     },
@@ -79,8 +79,15 @@ it.each([
     '<props><prop name="test" complex validation="IsString" /></props><template>This is a test</template>',
     {
       props: {
-        test: "IsString"
+        test: "IsString",
       },
+      template: ["This is a test"],
+    },
+  ],
+  [
+    '<deps><require path="./test/path" /></deps><template>This is a test</template>',
+    {
+      dependencies: ["./test/path"],
       template: ["This is a test"],
     },
   ],
@@ -113,6 +120,10 @@ it.each([
   [
     '<props><prop name="hello">Invalid Children</prop></props><template>Hello</template>',
     new Error("Props are invalid"),
+  ],
+  [
+    '<deps><require path="./test/path">Invalid Children</require></deps><template>Hello</template>',
+    new Error("Deps are invalid"),
   ],
 ])("fails on %s", (xml, error) => {
   expect(() => ParseTemplate(xml)).toThrowError(error);

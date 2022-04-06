@@ -1,4 +1,3 @@
-import "geninq";
 import {
   Assert,
   Checker,
@@ -11,7 +10,6 @@ import {
   IsTuple,
   IsType,
   IsUnion,
-  Optional,
 } from "@paulpopat/safe-type";
 import { X2jOptions, XMLParser } from "fast-xml-parser";
 import {
@@ -109,39 +107,45 @@ const IsProps = IsObject({
   ),
 });
 
+const IsDeps = IsObject({
+  deps: IsArray(
+    IsObject({
+      require: IsTuple(),
+      ":@": IsObject({
+        "@_attr": IsObject({ path: IsString }),
+      }),
+    })
+  ),
+});
+
 type Template = IsType<typeof IsTemplate>;
 
-type XmlElement =
-  | {
-      tag: string;
-      attributes: Record<string, string | boolean>;
-      children: XmlElement[];
-    }
-  | string;
+export type XmlNode = {
+  tag: string;
+  attributes: Record<string, string | boolean>;
+  children: XmlElement[];
+};
+
+export type XmlElement = XmlNode | string;
 
 function GetTag(ele: Xml[number]): string {
-  return Object.Keys(ele)
-    .geninq()
-    .single((k: string) => k !== ":@");
+  return Object.Keys(ele).find((k: string) => k !== ":@") ?? "";
 }
 
 function TransformXml(xml: Xml): XmlElement[] {
-  return xml
-    .geninq()
-    .select((o) =>
-      IsText(o)
-        ? o["@_text"].replace(/\s+/gm, " ")
-        : {
-            tag: GetTag(o),
-            attributes: WithAttributes(o) ? o[":@"]["@_attr"] : {},
-            children: TransformXml(o[GetTag(o)]),
-          }
-    )
-    .array();
+  return xml.map((o) =>
+    IsText(o)
+      ? o["@_text"].replace(/\s+/gm, " ")
+      : {
+          tag: GetTag(o),
+          attributes: WithAttributes(o) ? o[":@"]["@_attr"] : {},
+          children: TransformXml(o[GetTag(o)]),
+        }
+  );
 }
 
 function GetHandlers(xml: Xml) {
-  const scripts = xml.geninq().where((i) => GetTag(i) === "script");
+  const scripts = xml.filter((i) => GetTag(i) === "script");
   const element_events = {} as Record<
     string,
     Partial<Record<EventTrigger, string>>
@@ -172,9 +176,7 @@ function GetHandlers(xml: Xml) {
 }
 
 function GetStyles(xml: Xml) {
-  const styles = xml
-    .geninq()
-    .single((i) => GetTag(i) === "style", "or-default");
+  const styles = xml.find((i) => GetTag(i) === "style");
   if (styles) {
     Assert(IsStyle, styles, "Invalid styles. See documentation.");
     const data = styles.style[0]["@_text"];
@@ -186,7 +188,7 @@ function GetStyles(xml: Xml) {
 }
 
 function GetProps(xml: Xml) {
-  const props = xml.geninq().single((i) => GetTag(i) === "props", "or-default");
+  const props = xml.find((i) => GetTag(i) === "props");
   if (!props) return {};
   Assert(IsProps, props, "Props are invalid");
   const result = {} as Record<string, string>;
@@ -199,15 +201,26 @@ function GetProps(xml: Xml) {
   return { props: result };
 }
 
+function GetDeps(xml: Xml) {
+  const deps = xml.find((i) => GetTag(i) === "deps");
+  if (!deps) return {};
+  Assert(IsDeps, deps, "Deps are invalid");
+  const result = [];
+  for (const dep of deps.deps) {
+    const attr = dep[":@"]["@_attr"];
+    result.push(attr.path);
+  }
+
+  return { dependencies: result };
+}
+
 function GetTemplate(xml: Xml) {
-  const template = xml
-    .geninq()
-    .single<Template>(IsTemplate, "or-default")?.template;
+  const template: Template | undefined = xml.find((f) => IsTemplate(f)) as any;
   if (!template) {
     throw new Error("No template present");
   }
 
-  return TransformXml(template);
+  return TransformXml(template.template);
 }
 
 export function ParseTemplate(xml: string) {
@@ -219,6 +232,7 @@ export function ParseTemplate(xml: string) {
     ...GetHandlers(result),
     ...GetStyles(result),
     ...GetProps(result),
+    ...GetDeps(result),
   };
 }
 

@@ -1,8 +1,8 @@
-import { CompileApp } from "./compiler";
+import { BuildTemplate } from "./library-builder";
+import { ParseTemplate } from "./parser";
 
-(async () => {
-  await CompileApp();
-})().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+type Context = import("webpack").LoaderContext<{ declare: boolean }>;
+
+export default function (this: Context, source: string) {
+  return BuildTemplate(ParseTemplate(source), this.resourcePath);
+}

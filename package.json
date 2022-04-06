@@ -1,11 +1,8 @@
 {
-  "name": "webb",
+  "name": "@paulpopat/webb",
   "version": "1.0.0",
   "description": "A web component based JavaScript first framework using templating",
   "main": "lib/index.js",
-  "bin": {
-    "webb": "lib/index.js"
-  },
   "scripts": {
     "test": "jest",
     "compile": "tsc",
@@ -27,21 +24,24 @@
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
     "@types/jest": "^27.4.1",
+    "@types/loader-utils": "^2.0.3",
     "@types/uglify-js": "^3.13.1",
     "jest": "^27.5.1",
     "ts-jest": "^27.1.3",
-    "typescript": "^4.6.2"
+    "typescript": "^4.6.2",
+    "webpack": "^5.70.0"
   },
   "jest": {
     "preset": "ts-jest",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/?(*.)+(spec|test).[t]s?(x)"
+    ]
   },
   "dependencies": {
     "@paulpopat/safe-type": "^2.2.1",
     "fast-xml-parser": "^4.0.6",
     "fs-extra": "^10.0.1",
-    "geninq": "0.0.2",
-    "sass": "^1.49.9",
-    "uglify-js": "^3.15.3"
+    "sass": "^1.49.9"
   }
 }

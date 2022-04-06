@@ -1,0 +1,156 @@
+import { Assert, Checker, IsString } from "@paulpopat/safe-type";
+import { EventTrigger, GlobalEvent } from "./types";
+import { RunText, ParseText } from "./utils/expression";
+import Object from "./utils/object";
+
+type XmlElements = import("./parser").XmlElement[];
+type XmlNode = import("./parser").XmlNode;
+
+type EventHandlers = {
+  [TKey in GlobalEvent]: TKey extends "props"
+    ? (
+        props: unknown,
+        state: unknown,
+        set_state: (new_state: unknown) => void
+      ) => void
+    : (state: unknown, set_state: (new_state: unknown) => void) => void;
+};
+type TriggerHandlers = Record<
+  string,
+  Record<
+    EventTrigger,
+    (
+      event: Event,
+      state: unknown,
+      set_state: (new_state: unknown) => void
+    ) => void
+  >
+>;
+
+async function AddAttributes(
+  node: XmlNode,
+  element: HTMLElement,
+  props: Record<string, any>
+) {
+  for (const key of Object.Keys(node.attributes)) {
+    const value = node.attributes[key];
+    if (typeof value === "boolean") {
+      element.setAttribute(key, value.toString());
+    } else if (value.startsWith(":")) {
+      const input = await RunText(value.substring(1), props);
+      if (typeof input !== "string")
+        element.setAttribute(key, "%%JSON%%" + JSON.stringify(input));
+      else element.setAttribute(key, input);
+    } else {
+      element.setAttribute(key, value);
+    }
+  }
+}
+
+async function CreateElement(item: XmlNode, props: Record<string, any>) {
+  const element = document.createElement(item.tag);
+  await AddAttributes(item, element, props);
+  for await (const node of Render(item.children, props))
+    element.appendChild(node);
+  return element;
+}
+
+async function CreateText(item: string, props: Record<string, any>) {
+  return document.createTextNode(await ParseText(item, props));
+}
+
+async function* Render(
+  xml: XmlElements,
+  props: Record<string, any>
+): AsyncGenerator<Node> {
+  for (const item of xml) {
+    if (IsString(item)) yield CreateText(item, props);
+    else yield await CreateElement(item, props);
+  }
+}
+
+function ParseAttributeValue(val: string) {
+  return val.startsWith("%%JSON%%")
+    ? JSON.parse(val.replace("%%JSON%%", ""))
+    : val;
+}
+
+export default function <TProps extends Record<string, any>>(
+  IsProps: { [TKey in keyof TProps]: Checker<TProps[TKey]> },
+  Template: XmlElements,
+  Css: string,
+  TriggerHandlers: TriggerHandlers,
+  EventHandlers: EventHandlers
+) {
+  function Attributes(map: NamedNodeMap) {
+    const result = {} as TProps;
+    for (const item of map) {
+      const value = ParseAttributeValue(item.value);
+      const key = item.name as keyof TProps;
+      Assert(IsProps[key], value);
+    }
+
+    for (const key of Object.Keys(IsProps))
+      if (!(key in result)) throw new Error("Invalid props for component");
+
+    return result;
+  }
+
+  return class extends HTMLElement {
+    readonly #root: ShadowRoot;
+    #state: unknown;
+    #props: TProps;
+
+    async #render() {
+      const input = document.createElement("template");
+      for await (const ele of Render(Template, { state: this.#state })) {
+        input.appendChild(ele);
+      }
+
+      const style = document.createElement("style");
+      style.innerHTML = Css;
+      this.#root.replaceChildren(style, input.content);
+
+      for (const selector of Object.Keys(TriggerHandlers)) {
+        const targets = this.#root.querySelectorAll(selector);
+        const handlers = TriggerHandlers[selector];
+        for (const target of targets)
+          for (const event of Object.Keys(handlers)) {
+            target.addEventListener(event, (e) => {
+              handlers[event](e, this.#state, this.#set_state);
+            });
+          }
+      }
+
+      EventHandlers.render(this.#state, this.#set_state);
+    }
+
+    #set_state(new_state: unknown) {
+      this.#state = new_state;
+      EventHandlers.state(this.#state, this.#set_state);
+      this.#render();
+    }
+
+    constructor() {
+      super();
+      this.#root = this.attachShadow({ mode: "open" });
+      this.#state = {};
+      this.#props = Attributes(this.attributes);
+      this.#render();
+    }
+
+    static get observedAttributes() {
+      return Object.Keys(IsProps);
+    }
+
+    attributeChangedCallback(
+      name: string,
+      old_value: string,
+      new_value: string
+    ) {
+      this.#props = Attributes(this.attributes);
+      EventHandlers.props(this.#props, this.#state, this.#set_state);
+      this.#render();
+    }
+  };
+}

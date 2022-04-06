@@ -11,6 +11,8 @@
     ".vscode": true,
     "package-lock.json": true,
     ".gitignore": true,
-    "tsconfig.json": true
+    "tsconfig.json": true,
+    "test-project/node_modules": true,
+    "test-project/package-lock.json": true
   }
 }

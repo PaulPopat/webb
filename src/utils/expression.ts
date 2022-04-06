@@ -32,7 +32,7 @@ async function Evaluate(
   return await new AsyncFunction(...input)(...data.map((d) => d.value));
 }
 
-export async function ParseText(text: string, data: Record<string, any>) {
+export async function ParseText(text: string, data: object) {
   for (const expression of GetExpressions(text)) {
     text = text.replace(
       `{${expression}}`,
@@ -45,10 +45,7 @@ export async function ParseText(text: string, data: Record<string, any>) {
   return text;
 }
 
-export async function RunText(
-  text: string,
-  data: Record<string, any>
-): Promise<unknown> {
+export async function RunText(text: string, data: object): Promise<unknown> {
   return await Evaluate(text, [
     ...object.Keys(data).map((key) => ({ name: key, value: data[key] })),
   ]);

@@ -48,9 +48,7 @@ export function BuildTemplate(
     .replace(/%%END_FUNCTION_DATA%%\"/gm, "");
   const event_handlers = JSON.stringify(
     Object.MapKeys(template.global_events ?? {}, (handler, key) => {
-      const args =
-        key === "props" ? "(props, state, set_state)" : "(state, set_state)";
-      return `%%FUNCTION_DATA%%async ${args} => {${
+      return `%%FUNCTION_DATA%%async (state, set_state, props) => {${
         handler ?? ""
       }}%%END_FUNCTION_DATA%%`;
     })
@@ -61,7 +59,7 @@ export function BuildTemplate(
 import * as SafeType from "@paulpopat/safe-type";
 import Component from "@paulpopat/webb/lib/component";
 ${imports}
-const result = Componet(
+const result = Component(
   {${is_props}},
   ${input_template},
   "${css}",

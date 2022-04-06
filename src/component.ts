@@ -6,15 +6,14 @@ import Object from "./utils/object";
 type XmlElements = import("./parser").XmlElement[];
 type XmlNode = import("./parser").XmlNode;
 
-type EventHandlers = {
-  [TKey in GlobalEvent]: TKey extends "props"
-    ? (
-        props: unknown,
-        state: unknown,
-        set_state: (new_state: unknown) => void
-      ) => void
-    : (state: unknown, set_state: (new_state: unknown) => void) => void;
-};
+type EventHandlers = Record<
+  GlobalEvent,
+  (
+    state: unknown,
+    set_state: (new_state: unknown) => void,
+    props: unknown
+  ) => void
+>;
 type TriggerHandlers = Record<
   string,
   Record<
@@ -30,7 +29,7 @@ type TriggerHandlers = Record<
 async function AddAttributes(
   node: XmlNode,
   element: HTMLElement,
-  props: Record<string, any>
+  props: object
 ) {
   for (const key of Object.Keys(node.attributes)) {
     const value = node.attributes[key];
@@ -47,7 +46,7 @@ async function AddAttributes(
   }
 }
 
-async function CreateElement(item: XmlNode, props: Record<string, any>) {
+async function CreateElement(item: XmlNode, props: object) {
   const element = document.createElement(item.tag);
   await AddAttributes(item, element, props);
   for await (const node of Render(item.children, props))
@@ -55,14 +54,11 @@ async function CreateElement(item: XmlNode, props: Record<string, any>) {
   return element;
 }
 
-async function CreateText(item: string, props: Record<string, any>) {
+async function CreateText(item: string, props: object) {
   return document.createTextNode(await ParseText(item, props));
 }
 
-async function* Render(
-  xml: XmlElements,
-  props: Record<string, any>
-): AsyncGenerator<Node> {
+async function* Render(xml: XmlElements, props: object): AsyncGenerator<Node> {
   for (const item of xml) {
     if (IsString(item)) yield CreateText(item, props);
     else yield await CreateElement(item, props);
@@ -101,15 +97,22 @@ export default function <TProps extends Record<string, any>>(
     #state: unknown;
     #props: TProps;
 
+    #trigger(event: keyof EventHandlers) {
+      if (!EventHandlers[event]) return;
+      EventHandlers[event](this.#state, this.#set_state, this.#props);
+    }
+
     async #render() {
+      const input_state =
+        typeof this.#state === "object" ? this.#state : { state: this.#state };
       const input = document.createElement("template");
-      for await (const ele of Render(Template, { state: this.#state })) {
+      for await (const ele of Render(Template, input_state ?? {})) {
         input.appendChild(ele);
       }
 
       const style = document.createElement("style");
       style.innerHTML = Css;
-      this.#root.replaceChildren(style, input.content);
+      this.#root.replaceChildren(style, ...input.childNodes);
 
       for (const selector of Object.Keys(TriggerHandlers)) {
         const targets = this.#root.querySelectorAll(selector);
@@ -122,12 +125,12 @@ export default function <TProps extends Record<string, any>>(
           }
       }
 
-      EventHandlers.render(this.#state, this.#set_state);
+      this.#trigger("render");
     }
 
     #set_state(new_state: unknown) {
       this.#state = new_state;
-      EventHandlers.state(this.#state, this.#set_state);
+      this.#trigger("state");
       this.#render();
     }
 
@@ -149,7 +152,7 @@ export default function <TProps extends Record<string, any>>(
       new_value: string
     ) {
       this.#props = Attributes(this.attributes);
-      EventHandlers.props(this.#props, this.#state, this.#set_state);
+      this.#trigger("props");
       this.#render();
     }
   };

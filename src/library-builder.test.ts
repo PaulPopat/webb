@@ -26,7 +26,7 @@ it("Builds a full template", () => {
 import * as SafeType from "@paulpopat/safe-type";
 import Component from "@paulpopat/webb/lib/component";
 import "./test/path.webb"; import "./another/path.webb";
-const result = Componet(
+const result = Component(
   {test:SafeType.DoNotCare,another:SafeType.IsString,},
   [{"tag":"div","attributes":{"class":"test"},"children":[]}],
   "a { text-decoration: underline; } a span { color: red; }",

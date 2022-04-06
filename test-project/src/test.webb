@@ -1,9 +1,0 @@
-<template>
-  <div>Hello <b>World</b> aren't you awesome?</div>
-  <slot />
-</template>
-<style>
-  b {
-    color: red;
-  }
-</style>

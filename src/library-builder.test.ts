@@ -31,7 +31,7 @@ const result = Component(
   [{"tag":"div","attributes":{"class":"test"},"children":[]}],
   "a { text-decoration: underline; } a span { color: red; }",
   {".test-selector":{"click":async (event, state, set_state) => {const a = 'test'; set_state(a);}}},
-  {"props":async (props, state, set_state) => {set_state(props);},"render":async (state, set_state) => {console.log('Hello world')}}
+  {"props":async (state, set_state, props) => {set_state(props);},"render":async (state, set_state, props) => {console.log('Hello world')}}
 );
 window.customElements.define("test", result);
   `);

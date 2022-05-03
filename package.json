@@ -6,7 +6,7 @@
   "scripts": {
     "test": "jest",
     "compile": "tsc",
-    "prepublish": "npm install && npm run test && npm run compile"
+    "prepublish": "npm run test && npm run compile"
   },
   "repository": {
     "type": "git",

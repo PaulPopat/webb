@@ -1,4 +1,5 @@
 import object from "./object";
+import { AsyncFunction } from "./types";
 
 function* GetExpressions(value: string) {
   let current = "";
@@ -23,7 +24,6 @@ function* GetExpressions(value: string) {
   }
 }
 
-const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 async function Evaluate(
   expression: string,
   data: { name: string; value: any }[]

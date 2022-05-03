@@ -1,6 +1,6 @@
 {
   "name": "@paulpopat/webb",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A web component based JavaScript first framework using templating",
   "main": "lib/index.js",
   "scripts": {

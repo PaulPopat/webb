@@ -21,6 +21,14 @@ it.each([
     },
   ],
   [
+    `<template>Hello</template><script on="props">
+<testdata/></script>`,
+    {
+      template: ["Hello"],
+      global_events: { props: "\n<testdata/>" },
+    },
+  ],
+  [
     '<template>Hello</template><script trigger="click" selector="test"><testdata/></script>',
     {
       template: ["Hello"],

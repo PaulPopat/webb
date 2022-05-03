@@ -172,11 +172,17 @@ export default function <TProps extends Record<string, any>>(
       this.#render();
     }
 
+    #new_props() {
+      this.#props = Attributes(this.attributes);
+      this.#trigger("props");
+    }
+
     constructor() {
       super();
       this.#root = this.attachShadow({ mode: "open" });
       this.#state = {};
-      this.#props = Attributes(this.attributes);
+      this.#props = {} as any;
+      this.#new_props();
       this.#render();
     }
 
@@ -189,9 +195,7 @@ export default function <TProps extends Record<string, any>>(
       old_value: string,
       new_value: string
     ) {
-      this.#props = Attributes(this.attributes);
-      this.#trigger("props");
-      this.#render();
+      this.#new_props();
     }
   };
 }

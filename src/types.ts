@@ -3,7 +3,7 @@ import { IsUnion, IsLiteral, IsType } from "@paulpopat/safe-type";
 export const IsGlobalEvent = IsUnion(
   IsLiteral("props"),
   IsLiteral("render"),
-  IsLiteral("state")
+  IsLiteral("state"),
 );
 export type GlobalEvent = IsType<typeof IsGlobalEvent>;
 

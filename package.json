@@ -1,12 +1,12 @@
 {
   "name": "@paulpopat/webb",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A web component based JavaScript first framework using templating",
   "main": "lib/index.js",
   "scripts": {
     "test": "jest",
     "compile": "tsc",
-    "prepublish": "npm run test && npm run compile"
+    "prepublish": "npm install && npm run test && npm run compile"
   },
   "repository": {
     "type": "git",

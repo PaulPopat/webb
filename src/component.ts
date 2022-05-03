@@ -1,4 +1,11 @@
-import { Assert, Checker, IsString } from "@paulpopat/safe-type";
+import {
+  Assert,
+  Checker,
+  DoNotCare,
+  IsArray,
+  IsBoolean,
+  IsString,
+} from "@paulpopat/safe-type";
 import { EventTrigger, GlobalEvent } from "./types";
 import { RunText, ParseText } from "./utils/expression";
 import Object from "./utils/object";
@@ -58,9 +65,40 @@ async function CreateText(item: string, props: object) {
   return document.createTextNode(await ParseText(item, props));
 }
 
+async function* CreateForEach(item: XmlNode, props: object) {
+  const subject_attr = item.attributes.subject;
+  if (
+    !subject_attr ||
+    typeof subject_attr !== "string" ||
+    !subject_attr.startsWith(":")
+  )
+    throw new Error("For loops must have a calculated subject");
+
+  const subject = await RunText(subject_attr.substring(1), props);
+  Assert(IsArray(DoNotCare), subject, "For loop subjects must be arrays");
+
+  for (const sub of subject)
+    yield* Render(item.children, { ...props, subject: sub });
+}
+
+async function* CreateIf(item: XmlNode, props: object) {
+  const subject_attr = item.attributes.subject;
+  if (
+    !subject_attr ||
+    typeof subject_attr !== "string" ||
+    !subject_attr.startsWith(":")
+  )
+    throw new Error("If statements must have a calculated subject");
+
+  const subject = await RunText(subject_attr.substring(1), props);
+  Assert(IsBoolean, subject, "If statements must have boolean subjects");
+}
+
 async function* Render(xml: XmlElements, props: object): AsyncGenerator<Node> {
   for (const item of xml) {
     if (IsString(item)) yield CreateText(item, props);
+    else if (item.tag === "for-each") yield* CreateForEach(item, props);
+    else if (item.tag === "if-statement") yield* CreateIf(item, props);
     else yield await CreateElement(item, props);
   }
 }
